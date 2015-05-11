@@ -48,7 +48,7 @@ func ParseConstraint(str string) (*Constraint, error) {
 		}
 		operator += string(r)
 	}
-	str = str[len(c.Operator):]
+	str = str[len(operator):]
 
 	operators := []string{"=", ">", "<", ">=", "<="}
 	for _, o := range operators {
@@ -61,7 +61,7 @@ func ParseConstraint(str string) (*Constraint, error) {
 		return nil, ErrInvalidOperator
 	}
 
-	v, err := ParseVersion(strings.TrimPrefix(str, c.Operator))
+	v, err := ParseVersion(str)
 	if err != nil {
 		return nil, err
 	}
