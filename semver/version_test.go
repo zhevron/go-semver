@@ -1,6 +1,11 @@
 package semver
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+
+	"gopkg.in/yaml.v2"
+)
 
 func TestNewVersion(t *testing.T) {
 	v := NewVersion()
@@ -170,5 +175,86 @@ func TestVersionString(t *testing.T) {
 	v = &Version{2, 3, 5, []string{"beta7"}, []string{"+-*/"}}
 	if v.String() != "2.3.5-beta7" {
 		t.Errorf("expected %#q, got %#q", "2.3.5-beta7", v.String())
+	}
+}
+
+func TestVersionMarshalJSON(t *testing.T) {
+	v := &Version{2, 3, 5, []string{}, []string{"20150505"}}
+	type st struct {
+		Version *Version
+	}
+	s := &st{v}
+	j, err := json.Marshal(s)
+	if err != nil {
+		t.Errorf("expected nil, got %#q", err)
+	}
+	e := `{"Version":"2.3.5+20150505"}`
+	if string(j) != e {
+		t.Errorf("expected %#q, got %#q", e, string(j))
+	}
+}
+
+func TestVersionUnmarshalJSON(t *testing.T) {
+	j := []byte(`{"Version":"2.3.5+20150505"}`)
+	type st struct {
+		Version *Version
+	}
+	s := new(st)
+	if err := json.Unmarshal(j, &s); err != nil {
+		t.Errorf("expected nil, got %#q", err)
+	}
+	if s.Version.Major != 2 {
+		t.Errorf("expected %d, got %d", 2, s.Version.Major)
+	}
+	if s.Version.Minor != 3 {
+		t.Errorf("expected %d, got %d", 3, s.Version.Minor)
+	}
+	if s.Version.Patch != 5 {
+		t.Errorf("expected %d, got %d", 5, s.Version.Patch)
+	}
+}
+
+func TestVersionMarshalYAML(t *testing.T) {
+	v := &Version{2, 3, 5, []string{}, []string{"20150505"}}
+	type st struct {
+		Version *Version
+	}
+	s := &st{v}
+	j, err := yaml.Marshal(s)
+	if err != nil {
+		t.Errorf("expected nil, got %#q", err)
+		t.FailNow()
+	}
+	e := "version: 2.3.5+20150505\n"
+	if string(j) != e {
+		t.Errorf("expected %#q, got %#q", e, string(j))
+	}
+}
+
+func TestVersionUnmarshalYAML(t *testing.T) {
+	y := []byte(`version: 2.3.5+20150505`)
+	type st struct {
+		Version *Version
+	}
+	s := new(st)
+	if err := yaml.Unmarshal(y, &s); err != nil {
+		t.Errorf("expected nil, got %#q", err)
+		t.FailNow()
+	}
+	if s.Version.Major != 2 {
+		t.Errorf("expected %d, got %d", 2, s.Version.Major)
+	}
+	if s.Version.Minor != 3 {
+		t.Errorf("expected %d, got %d", 3, s.Version.Minor)
+	}
+	if s.Version.Patch != 5 {
+		t.Errorf("expected %d, got %d", 5, s.Version.Patch)
+	}
+
+	y = []byte(`
+version:
+  wrong: 2.3.5+20150505`)
+	if err := yaml.Unmarshal(y, &s); err == nil {
+		t.Errorf("expected non-nil, got nil")
 	}
 }

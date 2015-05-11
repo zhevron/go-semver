@@ -2,6 +2,7 @@
 package semver
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -118,6 +119,43 @@ func (v *Version) String() string {
 		v.strPreRelease(),
 		v.strMetadata(),
 	)
+}
+
+// MarshalJSON is a utility function for handling JSON marshalling
+// with json.Marshal.
+func (v *Version) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.String())
+}
+
+// UnmarshalJSON is a utility function for handling JSON unmarshalling
+// with json.Unmarshal.
+func (v *Version) UnmarshalJSON(data []byte) error {
+	ver, err := ParseVersion(strings.Replace(string(data), "\"", "", -1))
+	if err == nil {
+		*v = *ver
+	}
+	return err
+}
+
+// MarshalYAML is a utility function for handling YAML marshalling
+// with yaml.Marshal.
+func (v *Version) MarshalYAML() (interface{}, error) {
+	return v.String(), nil
+}
+
+// UnmarshalYAML is a utility function for handling YAML unmarshalling
+// with yaml.Unmarshal.
+func (v *Version) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var str string
+	if err := unmarshal(&str); err != nil {
+		return err
+	}
+
+	ver, err := ParseVersion(str)
+	if err == nil {
+		*v = *ver
+	}
+	return err
 }
 
 func (v *Version) comparePreRelease(ver *Version) int {
